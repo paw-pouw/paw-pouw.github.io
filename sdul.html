@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirim Pesan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <h2>Kirim Pesan</h2>
+
+    <!-- Form untuk mengirim pesan -->
+    <form id="sendMessageForm">
+        <input type="text" id="name" placeholder="Nama Anda" required>
+        <textarea id="message" rows="5" placeholder="Tulis pesan Anda..." required></textarea>
+        <button type="submit">Kirim Pesan</button>
+    </form>
+
+    <p id="statusMessage"></p>
+
+    <h2>Pesan Terbaru</h2>
+    <div id="latestMessages"></div>
+
+    <script>
+        const botToken = "7338358850:AAFz6U7TqF_d7vjd9QtRGf_BqX8u9cvHeL0"; // Ganti dengan token bot Anda
+        const chatId = "-1002385578964"; // Ganti dengan chat ID grup Anda
+
+        // Kirim pesan ke Telegram
+        document.getElementById('sendMessageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const message = document.getElementById('message').value;
+            const fullMessage = `Nama: ${name}\nPesan: ${message}`;
+
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+            const data = new URLSearchParams();
+            data.append("chat_id", chatId);
+            data.append("text", fullMessage);
+
+            fetch(url, {
+                method: 'POST',
+                body: data,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    document.getElementById('statusMessage').textContent = "Pesan berhasil dikirim!";
+                    document.getElementById('name').value = '';
+                    document.getElementById('message').value = '';
+                    fetchLatestMessages(); // Fetch pesan terbaru setelah pengiriman
+                } else {
+                    document.getElementById('statusMessage').textContent = "Gagal mengirim pesan.";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('statusMessage').textContent = "Terjadi kesalahan saat mengirim pesan.";
+            });
+        });
+
+        // Ambil pesan terbaru dari grup Telegram
+        function fetchLatestMessages() {
+            const url = `https://api.telegram.org/bot${botToken}/getUpdates`;
+
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const updates = data.result;
+                const messagesDiv = document.getElementById('latestMessages');
+                messagesDiv.innerHTML = ''; // Bersihkan sebelumnya
+
+                if (updates.length === 0) {
+                    messagesDiv.innerHTML = '<p>Tidak ada pesan terbaru.</p>';
+                } else {
+                    updates.forEach(update => {
+                        const message = update.message.text;
+                        const fromName = update.message.from.first_name;
+                        const chatId = update.message.chat.id;
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('message');
+                        messageDiv.innerHTML = `<strong>Chat ID:</strong> ${chatId}<br>
+                                                <strong>Nama Pengirim:</strong> ${fromName}<br>
+                                                <strong>Pesan:</strong> ${message}`;
+                        messagesDiv.appendChild(messageDiv);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('latestMessages').innerHTML = '<p>Gagal mengambil pesan terbaru.</p>';
+            });
+        }
+
+        // Ambil pesan terbaru saat halaman dimuat
+        fetchLatestMessages();
+    </script>
+</body>
+</html>
